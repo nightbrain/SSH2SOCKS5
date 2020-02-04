@@ -1,0 +1,9 @@
+{
+    "version": "1.0.0",
+    "author": "nightbrain",
+    "license": "ISC",
+    "devDependencies": {
+        "prettier": "^1.19.1",
+        "prettier-plugin-java": "^0.6.0"
+    }
+}
