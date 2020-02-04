@@ -7,12 +7,16 @@ import org.apache.sshd.common.util.net.SshdSocketAddress;
 import org.apache.sshd.server.forward.AcceptAllForwardingFilter;
 
 public class SSH {
+    public boolean isConnected = false;
+    public boolean isConnecting = false;
+
     private SshClient client;
     private ClientSession session;
     private int port = -1;
 
     public boolean connect(String host, String username, String password) {
-        boolean isConnected = false;
+        isConnected = false;
+        isConnecting = true;
         try {
             client = SshClient.setUpDefaultClient();
             client.setForwardingFilter(AcceptAllForwardingFilter.INSTANCE);
@@ -47,6 +51,7 @@ public class SSH {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        isConnecting = false;
         return isConnected;
     }
 
@@ -57,6 +62,7 @@ public class SSH {
         try {
             if (client != null) client.stop();
         } catch (Exception ignored) {}
+        isConnected = false;
         session = null;
         client = null;
     }
