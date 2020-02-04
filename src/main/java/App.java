@@ -3,6 +3,7 @@ import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -29,15 +30,24 @@ public class App {
     }
 
     public static void connect(HttpExchange httpExchange) throws IOException {
-        Future<String> future = executorService.submit(
+        Future<SSH> future = executorService.submit(
             () -> {
                 SSH ssh = new SSH();
-                return "Hello!";
+                boolean isConnected = ssh.connect("", "", "");
+                if (isConnected) {
+                    return ssh;
+                }
+                ssh.disconnect();
+                return null;
             }
         );
         String response = "ERROR";
         try {
-            response = future.get();
+            SSH ssh = future.get();
+            if (ssh != null) {
+                UUID uuid = UUID.randomUUID();
+                response = uuid.toString();
+            }
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
