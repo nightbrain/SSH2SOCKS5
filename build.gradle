@@ -22,4 +22,6 @@ task fatJar(type: Jar) {
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
+    // https://mvnrepository.com/artifact/org.apache.sshd/sshd-core
+    compile group: 'org.apache.sshd', name: 'sshd-core', version: '2.3.0'
 }
