@@ -11,6 +11,15 @@ repositories {
     mavenCentral()
 }
 
+//create a single Jar with all dependencies
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'App'
+    }
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
