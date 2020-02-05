@@ -77,11 +77,7 @@ public class App {
         if (!jsonObject.containsKey("status")) {
             jsonObject.put("status", "ERROR");
         }
-        String response = jsonObject.toJSONString();
-        httpExchange.sendResponseHeaders(jsonObject.get("status").equals("OK") ? 200 : 400, response.length());
-        OutputStream os = httpExchange.getResponseBody();
-        os.write(response.getBytes());
-        os.close();
+        end(httpExchange, jsonObject.get("status").equals("OK") ? 200 : 400, jsonObject);
     }
 
     private static void disconnect(HttpExchange httpExchange) throws IOException {
@@ -95,11 +91,7 @@ public class App {
         } else {
             jsonObject.put("status", "ERROR");
         }
-        String response = jsonObject.toJSONString();
-        httpExchange.sendResponseHeaders(jsonObject.get("status").equals("OK") ? 200 : 400, response.length());
-        OutputStream os = httpExchange.getResponseBody();
-        os.write(response.getBytes());
-        os.close();
+        end(httpExchange, jsonObject.get("status").equals("OK") ? 200 : 400, jsonObject);
     }
 
     private static void clear(HttpExchange httpExchange) throws IOException {
@@ -111,11 +103,7 @@ public class App {
         sshes.clear();
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("status", "OK");
-        String response = jsonObject.toJSONString();
-        httpExchange.sendResponseHeaders(200, response.length());
-        OutputStream os = httpExchange.getResponseBody();
-        os.write(response.getBytes());
-        os.close();
+        end(httpExchange, 200, jsonObject);
     }
 
     private static JSONObject getRequestBody(HttpExchange httpExchange) {
@@ -138,5 +126,13 @@ public class App {
             e.printStackTrace();
         }
         return new JSONObject();
+    }
+
+    private static void end(HttpExchange httpExchange, int status, JSONObject jsonObject) throws IOException {
+        String response = jsonObject.toJSONString();
+        httpExchange.sendResponseHeaders(status, response.length());
+        OutputStream os = httpExchange.getResponseBody();
+        os.write(response.getBytes());
+        os.close();
     }
 }
