@@ -37,6 +37,7 @@ public class App {
     }
 
     private static void connect(HttpExchange httpExchange) throws IOException {
+        long startTime = System.currentTimeMillis();
         JSONObject body = getRequestBody(httpExchange);
         Future<SSH> future = executorService.submit(
             () -> {
@@ -60,8 +61,11 @@ public class App {
                 String uuid = UUID.randomUUID().toString();
                 jsonObject.put("status", "OK");
                 jsonObject.put("id", uuid);
+                jsonObject.put("host", "127.0.0.1");
                 jsonObject.put("port", ssh.getPort());
+                jsonObject.put("ip", ssh.ip);
                 jsonObject.put("address", "socks5://127.0.0.1:" + ssh.getPort());
+                jsonObject.put("delta_time", System.currentTimeMillis() - startTime);
                 sshes.put(uuid, ssh);
             }
         } catch (InterruptedException | ExecutionException e) {

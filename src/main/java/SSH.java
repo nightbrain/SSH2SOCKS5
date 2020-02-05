@@ -9,12 +9,14 @@ import org.apache.sshd.server.forward.AcceptAllForwardingFilter;
 public class SSH {
     public boolean isConnected = false;
     public boolean isConnecting = false;
+    public String ip;
 
     private SshClient client;
     private ClientSession session;
     private int port = -1;
 
     public boolean connect(String host, String username, String password) {
+        ip = host;
         isConnected = false;
         isConnecting = true;
         try {
