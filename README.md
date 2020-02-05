@@ -1,7 +1,7 @@
 # Build
 `gradle fatJar`
 # Exec
-`java -jar Build-Name.jar <PORT|2223> <THREAD_POOL_SIZE|100>`
+`java -jar SSH2SOCKS5-1.0-SNAPSHOT.jar <PORT|2223> <THREAD_POOL_SIZE|100>`
 # API
 `POST /connect`
 ```json
