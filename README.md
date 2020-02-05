@@ -43,7 +43,7 @@
     "status": "ERROR"
 }
 ```
-`GET/POST /clear`
+`GET|POST /clear`
 ```json
 {
     "status": "OK"
