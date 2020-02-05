@@ -30,7 +30,7 @@
 `POST /disconnect`
 ```json
 {
-	"id": "912a8f6f-db7b-4d37-a395-4d08f4808b32"
+    "id": "912a8f6f-db7b-4d37-a395-4d08f4808b32"
 }
 ```
 ```json
