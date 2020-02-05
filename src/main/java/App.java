@@ -5,6 +5,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -32,6 +34,7 @@ public class App {
         HttpServer httpServer = HttpServer.create(new InetSocketAddress(port), 0);
         httpServer.createContext("/connect", App::connect);
         httpServer.createContext("/disconnect", App::disconnect);
+        httpServer.createContext("/clear", App::clear);
         httpServer.setExecutor(null);
         httpServer.start();
     }
@@ -94,6 +97,22 @@ public class App {
         }
         String response = jsonObject.toJSONString();
         httpExchange.sendResponseHeaders(jsonObject.get("status").equals("OK") ? 200 : 400, response.length());
+        OutputStream os = httpExchange.getResponseBody();
+        os.write(response.getBytes());
+        os.close();
+    }
+
+    private static void clear(HttpExchange httpExchange) throws IOException {
+        Set<Map.Entry<String, SSH>> set = sshes.entrySet();
+        for (Map.Entry<String, SSH> ssh : set) {
+            ssh.getValue().disconnect();
+        }
+        set.clear();
+        sshes.clear();
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("status", "OK");
+        String response = jsonObject.toJSONString();
+        httpExchange.sendResponseHeaders(200, response.length());
         OutputStream os = httpExchange.getResponseBody();
         os.write(response.getBytes());
         os.close();
