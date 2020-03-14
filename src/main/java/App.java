@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -19,6 +18,7 @@ import org.json.simple.parser.ParseException;
 public class App {
     private static ExecutorService executorService;
     private static HashMap<String, SSH> sshes = new HashMap<>();
+    private static HashMap<String, JSONObject> responses = new HashMap<>();
 
     public static void main(String[] args) throws IOException {
         int port = 2223;
@@ -33,15 +33,29 @@ public class App {
         executorService = Executors.newFixedThreadPool(maxPool);
         HttpServer httpServer = HttpServer.create(new InetSocketAddress(port), 0);
         httpServer.createContext("/connect", App::connect);
+        httpServer.createContext("/status", App::status);
         httpServer.createContext("/disconnect", App::disconnect);
         httpServer.createContext("/clear", App::clear);
         httpServer.setExecutor(null);
         httpServer.start();
     }
 
+    private static void status(HttpExchange httpExchange) throws IOException {
+        JSONObject body = getRequestBody(httpExchange);
+        JSONObject jsonObject = responses.get(body.get("id").toString());
+        if (jsonObject == null) {
+            jsonObject = new JSONObject();
+            jsonObject.put("status", "WAITING");
+        } else {
+            responses.remove(body.get("id").toString());
+        }
+        end(httpExchange, jsonObject.get("status").equals("OK") ? 200 : 400, jsonObject);
+    }
+
     private static void connect(HttpExchange httpExchange) throws IOException {
         long startTime = System.currentTimeMillis();
         JSONObject body = getRequestBody(httpExchange);
+        String uuid = UUID.randomUUID().toString();
         Future<SSH> future = executorService.submit(
             () -> {
                 SSH ssh = new SSH();
@@ -50,33 +64,27 @@ public class App {
                     body.get("username").toString(),
                     body.get("password").toString()
                 );
+                JSONObject jsonObject = new JSONObject();
                 if (isConnected) {
-                    return ssh;
+                    sshes.put(uuid, ssh);
+                    jsonObject.put("status", "OK");
+                    jsonObject.put("id", uuid);
+                    jsonObject.put("host", "127.0.0.1");
+                    jsonObject.put("port", ssh.getPort());
+                    jsonObject.put("ip", ssh.ip);
+                    jsonObject.put("address", "socks5://127.0.0.1:" + ssh.getPort());
+                    jsonObject.put("delta_time", System.currentTimeMillis() - startTime);
+                } else {
+                    jsonObject.put("status", "ERROR");
+                    ssh.disconnect();
                 }
-                ssh.disconnect();
-                return null;
+                responses.put(uuid, jsonObject);
+                return ssh;
             }
         );
         JSONObject jsonObject = new JSONObject();
-        try {
-            SSH ssh = future.get();
-            if (ssh != null) {
-                String uuid = UUID.randomUUID().toString();
-                jsonObject.put("status", "OK");
-                jsonObject.put("id", uuid);
-                jsonObject.put("host", "127.0.0.1");
-                jsonObject.put("port", ssh.getPort());
-                jsonObject.put("ip", ssh.ip);
-                jsonObject.put("address", "socks5://127.0.0.1:" + ssh.getPort());
-                jsonObject.put("delta_time", System.currentTimeMillis() - startTime);
-                sshes.put(uuid, ssh);
-            }
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-        if (!jsonObject.containsKey("status")) {
-            jsonObject.put("status", "ERROR");
-        }
+        jsonObject.put("id", uuid);
+        jsonObject.put("status", "OK");
         end(httpExchange, jsonObject.get("status").equals("OK") ? 200 : 400, jsonObject);
     }
 
@@ -123,6 +131,7 @@ public class App {
         try {
             return (JSONObject) jsonParser.parse(body.toString());
         } catch (ParseException e) {
+            System.out.println(body.toString());
             e.printStackTrace();
         }
         return new JSONObject();
